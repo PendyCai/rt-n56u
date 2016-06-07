@@ -80,6 +80,7 @@ board_mk="$ROOTDIR/configs/boards/$CONFIG_FIRMWARE_PRODUCT_ID/board.mk"
 uclibc_cf="$ROOTDIR/configs/boards/$CONFIG_FIRMWARE_PRODUCT_ID/libc.config"
 kernel_cd="$ROOTDIR/configs/boards/$CONFIG_FIRMWARE_PRODUCT_ID"
 kernel_tf="$ROOTDIR/$CONFIG_LINUXDIR/.config"
+custm_busybox_cf="$ROOTDIR/configs/boards/$CONFIG_FIRMWARE_PRODUCT_ID/busybox.config"
 
 if [ "$CONFIG_LINUXDIR" = "linux-3.0.x" ] ; then
 	kernel_id="3.0.x"
@@ -89,6 +90,10 @@ if [ "$CONFIG_FIRMWARE_TYPE_ROOTFS_IN_RAM" = "y" ] ; then
 	kernel_cf="${kernel_cd}/kernel-${kernel_id}.ram.config"
 else
 	kernel_cf="${kernel_cd}/kernel-${kernel_id}.config"
+fi
+
+if [ -f $custm_busybox_cf ]; then
+    busybox_cf=$custm_busybox_cf
 fi
 
 if [ ! -f "$kernel_cf" ] ; then

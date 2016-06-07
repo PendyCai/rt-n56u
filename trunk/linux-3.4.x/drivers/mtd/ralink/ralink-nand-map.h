@@ -25,6 +25,70 @@
 #define NAND_MTD_RWFS_PART_IDX		6
 #endif
 
+
+
+
+#ifdef BOARD_SKYRN1
+
+#undef  NAND_MTD_RWFS_PART_IDX   
+#define NAND_MTD_RWFS_PART_IDX      6
+
+#undef  NAND_MTD_KERNEL_PART_IDX
+#define NAND_MTD_KERNEL_PART_IDX    3
+static struct mtd_partition rt2880_partitions[] = {
+
+    /* mtd0 */
+    {
+        name    :   "Bootloader",
+        size    :   0x100000,
+        offset  :   0,
+    },
+    /* mtd1 */
+    {
+        name    :   "Config",
+        size    :   0x80000,
+        offset  :   0x200000,
+    },
+    /* mtd2 */
+    {
+        name    :   "Factory",
+        size    :   0x80000,
+        offset  :   0x300000,
+    },
+    /* mtd3 */
+    {
+        name    :   "Linux",
+        size    :   0xA00000,
+        offset  :   0x400000,
+    },
+    /* mtd4 */
+    {
+        name    :   "RootFS",
+        size    :   0xF00000,
+        offset  :   0x1000000,
+    },
+    /* mtd5 */
+    {
+        name    :   "Storage",
+        size    :   0x400000,
+        offset  :   0x2000000,
+    },
+    /* mtd6 */
+    {
+        name    :   "RWFS",
+        size    :   0x800000,
+        offset  :   0x2600000,
+    },
+    /* mtd7 */
+    {
+        name    :   "Firmware_Stub",
+        size    :   0xC00000,
+        offset  :   0x3000000,
+    },
+
+};
+
+#else
 static struct mtd_partition rt2880_partitions[] = {
 	{
 		name:   "Bootloader",			/* mtdblock0 */
@@ -75,21 +139,28 @@ static struct mtd_partition rt2880_partitions[] = {
 	}
 };
 
+
+#endif
+
 inline void recalc_partitions(uint64_t flash_size, uint32_t kernel_size)
 {
+#ifndef BOARD_SKYRN1
+
 	/* calc "Kernel" size */
-#if defined (CONFIG_RT2880_ROOTFS_IN_FLASH)
-#if defined (CONFIG_ROOTFS_IN_FLASH_NO_PADDING)
-	rt2880_partitions[NAND_MTD_KERNEL_PART_IDX].size = kernel_size;
-#else
-	rt2880_partitions[NAND_MTD_KERNEL_PART_IDX].size = CONFIG_MTD_KERNEL_PART_SIZ;
-#endif
-	/* calc "RootFS" size */
+  #if defined (CONFIG_RT2880_ROOTFS_IN_FLASH)
+    #if defined (CONFIG_ROOTFS_IN_FLASH_NO_PADDING)
+	  rt2880_partitions[NAND_MTD_KERNEL_PART_IDX].size = kernel_size;
+    #else
+	  rt2880_partitions[NAND_MTD_KERNEL_PART_IDX].size = CONFIG_MTD_KERNEL_PART_SIZ;
+    #endif
+    /* calc "RootFS" size */
 	rt2880_partitions[NAND_MTD_ROOTFS_PART_IDX].size = NAND_MTD_KERNEL_PART_SIZE - rt2880_partitions[NAND_MTD_KERNEL_PART_IDX].size;
-#endif
+  #endif
 
 	/* calc "RWFS" size (UBIFS or JFFS2) */
 	rt2880_partitions[NAND_MTD_RWFS_PART_IDX].size = flash_size - NAND_MTD_RWFS_PART_OFFSET;
+
+#endif
 }
 
 #endif
