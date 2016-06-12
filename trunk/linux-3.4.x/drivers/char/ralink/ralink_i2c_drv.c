@@ -678,6 +678,9 @@ long i2cdrv_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	unsigned int address, size;
 	u8 value, *tmp;
 	I2C_WRITE *s_i2c_write;
+	I2C_READ  *s_i2c_read;
+
+    unsigned char data[READ_BLOCK];
 
 	switch (cmd) {
 	case RT2880_PCIE_PHY_READ:
@@ -697,10 +700,10 @@ long i2cdrv_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		//random_write_one_byte(address, &value);
 		i2c_write((unsigned long)address, tmp, 4);
 		break;
-	case RT2880_I2C_DUMP:
+	case RT2880_E2P_DUMP:
 		i2c_eeprom_dump();
 		break;
-	case RT2880_I2C_READ:
+	case RT2880_E2P_READ:
 		value = 0; address = 0;
 		address = (unsigned int)arg;
 #if defined(CONFIG_MTK_NFC_MT6605_SIM)
@@ -728,7 +731,7 @@ long i2cdrv_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		printk("0x%04x : 0x%08x\n", address, (unsigned int)value);
 #endif
 		break;
-	case RT2880_I2C_WRITE:
+	case RT2880_E2P_WRITE:
 		s_i2c_write = (I2C_WRITE*)arg;
 		address = s_i2c_write->address;
 		value   = s_i2c_write->value;
@@ -753,16 +756,57 @@ long i2cdrv_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 #endif
 		break;
+    case RT2880_I2C_READ:
+        {
+            int i;
+            int nblock ;
+            int rem ;
+        
+            s_i2c_read = (I2C_READ*)arg;
+            address  = s_i2c_read->address;
+            size     = s_i2c_read->size;
+            nblock = size / READ_BLOCK;
+
+            i2c_master_init();
+            // write address
+            i2c_write(address, data, 0);
+
+            // read i2c bus w/o START bit
+            for (i=0; i<(nblock+1) && size; i++) {
+                rem = (size > READ_BLOCK) ? READ_BLOCK : size;
+                i2c_read(data, rem);
+                size -= rem;
+
+                copy_to_user(
+                    (void *)((unsigned char *)s_i2c_read->value + i*READ_BLOCK), 
+                    data, rem);
+            }
+        }
+        break;
+    case RT2880_I2C_WRITE:
+        {
+            s_i2c_write = (I2C_WRITE*)arg;
+            address = s_i2c_write->address;
+            value   = s_i2c_write->value;
+            size    = s_i2c_write->size;
+            if (size > sizeof(unsigned long)) {
+                printk("size error!\n");
+            } else {
+                i2c_master_init();
+                i2c_write(address, (u8 *)&value, size);
+            }
+        }
+        break;
 	case RT2880_I2C_SET_ADDR:
 		i2cdrv_addr = (unsigned long)arg;
 		break;
 	case RT2880_I2C_SET_ADDR_BYTES:
 		value = switch_address_bytes( (unsigned long)arg);
-		printk("i2c addr bytes = %x\n", value);
+		//printk("i2c addr bytes = %x\n", value);
 		break;
 	case RT2880_I2C_SET_CLKDIV:
 		clkdiv_value = 40*1000/(unsigned long)arg;
-		printk("i2c clkdiv = %d\n", clkdiv_value);
+		//printk("i2c clkdiv = %d\n", clkdiv_value);
 		break;
 	default :
 		printk("i2c_drv: command format error\n");

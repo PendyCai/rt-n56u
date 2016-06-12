@@ -41,6 +41,7 @@
 
 #include "rc.h"
 #include "gpio_pins.h"
+#include "ralink_i2c.h"
 #include "switch.h"
 
 extern struct nvram_pair router_defaults[];
@@ -1467,6 +1468,7 @@ static const applet_rc_t applets_rc[] = {
 	{ "rstats",		rstats_main		},
 
 	{ "mtk_gpio",		cpu_gpio_main		},
+	{ "mtk_i2c",		ralink_i2c_main		},
 #if defined (USE_MTK_ESW) || defined (USE_MTK_GSW)
 	{ "mtk_esw",		mtk_esw_main		},
 #endif

@@ -26,6 +26,9 @@
 #endif
 
 
+#if (NAND_MTD_KERNEL_PART_SIZE == 0x00000000)
+  #define BOARD_SKYRN1
+#endif
 
 
 #ifdef BOARD_SKYRN1

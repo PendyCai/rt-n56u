@@ -39,14 +39,16 @@
 #define	RT2880_I2C_READ_STR		"read"	/* I2C read operation */
 #define	RT2880_I2C_WRITE_STR		"write"	/* I2C read operation */
 
-#define RT2880_I2C_DUMP			1
-#define RT2880_I2C_READ			3
-#define RT2880_I2C_WRITE		5
+#define RT2880_E2P_DUMP			1
+#define RT2880_E2P_READ			3
+#define RT2880_E2P_WRITE		5
 #define RT2880_I2C_SET_ADDR		7
 #define RT2880_I2C_SET_ADDR_BYTES	9
 #define RT2880_PCIE_PHY_READ		10
 #define RT2880_PCIE_PHY_WRITE		8
 #define RT2880_I2C_SET_CLKDIV		12
+#define RT2880_I2C_READ             13
+#define RT2880_I2C_WRITE            14
 
 #define I2C_DEV_NAME			"i2cM0"
 
@@ -55,6 +57,12 @@ typedef struct i2c_write_data {
 	unsigned long value;
 	unsigned long size;
 } I2C_WRITE;
+
+typedef struct i2c_read_data {
+    unsigned long address;
+    unsigned long *value;
+    unsigned long size;
+} I2C_READ;
 
 
 /*---------------------------------------------------------------------*/
