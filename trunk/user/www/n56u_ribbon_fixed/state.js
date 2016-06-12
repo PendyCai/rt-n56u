@@ -173,7 +173,7 @@ function showSystemInfo(cpu_now,force){
 	var m = sysinfo.uptime.minutes < 10 ? ('0'+sysinfo.uptime.minutes) : sysinfo.uptime.minutes;
 
 	$j("#la_info").html('<span class="label label-'+getLALabelStatus(arrLA[0])+'">'+arrLA[0]+'</span>&nbsp;<span class="label label-'+getLALabelStatus(arrLA[1])+'">'+arrLA[1]+'</span>&nbsp;<span class="label label-'+getLALabelStatus(arrLA[2])+'">'+arrLA[2]+'</span>');
-	$j("#cpu_info").html(cpu_now.busy + '%');
+	$j("#cpu_info").html(cpu_now.busy + '% '+ ' &nbsp; (' + sysinfo.temp  + ' °C) ');
 	$j("#mem_info").html(bytesToSize(sysinfo.ram.free*1024, 2) + " / " + bytesToSize(sysinfo.ram.total*1024, 2));
 	$j("#uptime_info").html(sysinfo.uptime.days + "<#Day#>".substring(0,1) + " " + h+"<#Hour#>".substring(0,1) + " " + m+"<#Minute#>".substring(0,1));
 

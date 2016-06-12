@@ -10,6 +10,8 @@ include $(SHDIR)/cflags.mk
 
 CFLAGS += -Wall -I. -I$(SHDIR) -I$(SHDIR)/include
 CFLAGS += -I$(USERDIR)/wireless_tools
+CFLAGS += -I$(ROOTDIR)/$(LINUXDIR)/include
+CFLAGS += -I$(ROOTDIR)/$(LINUXDIR)/include/ralink
 
 LDFLAGS += -L. -lm
 LDFLAGS += -L$(SHDIR) -lshared

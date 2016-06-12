@@ -97,12 +97,19 @@ int ralink_i2c_main(int argc, char **argv)
     }
 
     if (rw == 1) {          /* i2c read */
+        I2C_READ rdata;
+        unsigned long data;
+        rdata.address = addr;
+        rdata.value   = &data;
+        rdata.size    = 2;
+
         ret  = ioctl(fd, RT2880_I2C_SET_ADDR_BYTES, 1);
         ret |= ioctl(fd, RT2880_I2C_SET_ADDR, chipaddr);
-        ret |= ioctl(fd, RT2880_I2C_READ, addr);
+        ret |= ioctl(fd, RT2880_I2C_READ, &rdata);
         if (ret) {
           printf("i2c read error! ret = %u\n", ret);
         }
+        printf("%04x\n", data);
     } else if (rw == 2) {   /*  i2c write*/
         I2C_WRITE wdata;
         wdata.address = addr;

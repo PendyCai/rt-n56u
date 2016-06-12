@@ -46,6 +46,7 @@
 #define __user
 #endif
 
+#include <ralink_i2c_drv.h>
 #include <wireless.h>
 #include <ralink_priv.h>
 #include <notify_rc.h>
@@ -2718,6 +2719,37 @@ void get_wifidata(struct wifi_stats *st, int is_5ghz)
 	}
 }
 
+void get_board_temperature(unsigned long *temp)
+{
+    int ret;
+    int fd ;
+    if (! temp)
+    {
+        return;
+    }
+    fd = open("/dev/"I2C_DEV_NAME, O_RDWR);
+    if (fd < 0)
+    {
+        return;
+    }
+    else
+    {
+        unsigned char p[4];
+        I2C_READ rdata;
+        rdata.address = 0x0;
+        rdata.value   = &p[0];
+        rdata.size    = 2;
+        
+        ret  = ioctl(fd, RT2880_I2C_SET_ADDR_BYTES, 1);
+        ret |= ioctl(fd, RT2880_I2C_SET_ADDR, 72);
+        ret |= ioctl(fd, RT2880_I2C_READ, &rdata);
+
+        *temp = (((p[0] << 8) | p[1]) >> 4) * 625;  /* 0.0625 * 10000 */
+
+        close(fd);
+    }
+}
+
 
 #define LOAD_INT(x)	(unsigned)((x) >> 16)
 #define LOAD_FRAC(x)	LOAD_INT(((x) & ((1 << 16) - 1)) * 100)
@@ -2731,11 +2763,14 @@ static int ej_system_status_hook(int eid, webs_t wp, int argc, char **argv)
 	struct wifi_stats wifi5;
 	struct stat log;
 	unsigned long updays, uphours, upminutes;
+	unsigned long temperature = 0;
 
 	get_cpudata(&cpu);
 	get_memdata(&mem);
 	get_wifidata(&wifi2, 0);
 	get_wifidata(&wifi5, 1);
+	get_board_temperature(&temperature);
+    printf("-->%lu\n", temperature);
 
 	sysinfo(&info);
 	updays = (unsigned long) info.uptime / (unsigned long)(60*60*24);
@@ -2754,19 +2789,22 @@ static int ej_system_status_hook(int eid, webs_t wp, int argc, char **argv)
 			"ram: {total: %lu, used: %lu, free: %lu, buffers: %lu, cached: %lu}, "
 			"swap: {total: %lu, used: %lu, free: %lu}, "
 			"cpu: {busy: 0x%llx, user: 0x%llx, nice: 0x%llx, system: 0x%llx, "
-			      "idle: 0x%llx, iowait: 0x%llx, irq: 0x%llx, sirq: 0x%llx, total: 0x%llx}, "
-			"wifi2: {state: %d, guest: %d}, "
-			"wifi5: {state: %d, guest: %d}, "
-			"logmt: %ld }",
+			      "idle: 0x%llx, iowait: 0x%llx, irq: 0x%llx, sirq: 0x%llx, total: 0x%llx}, ",
 			LOAD_INT(info.loads[0]), LOAD_FRAC(info.loads[0]),
 			LOAD_INT(info.loads[1]), LOAD_FRAC(info.loads[1]),
 			LOAD_INT(info.loads[2]), LOAD_FRAC(info.loads[2]),
 			updays, uphours, upminutes,
 			mem.total, (mem.total - mem.free), mem.free, mem.buffers, mem.cached,
 			mem.sw_total, (mem.sw_total - mem.sw_free), mem.sw_free,
-			cpu.busy, cpu.user, cpu.nice, cpu.system, cpu.idle, cpu.iowait, cpu.irq, cpu.sirq, cpu.total,
+			cpu.busy, cpu.user, cpu.nice, cpu.system, cpu.idle, cpu.iowait, cpu.irq, cpu.sirq, cpu.total
+        );
+    websWrite(wp, "wifi2: {state: %d, guest: %d}, "
+			"wifi5: {state: %d, guest: %d}, "
+			"temp: %.2f, "
+			"logmt: %ld }",
 			wifi2.radio, wifi2.ap_guest,
 			wifi5.radio, wifi5.ap_guest,
+			temperature / 10000.0 ,
 			log.st_mtime
 		);
 
