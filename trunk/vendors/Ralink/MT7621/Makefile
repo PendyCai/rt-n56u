@@ -79,7 +79,7 @@ image:
 	$(CROSS_COMPILE)objcopy -O binary -R .note -R .comment -S $(ROOTDIR)/$(LINUXDIR)/vmlinux $(KERNELZ)
 	cd $(IMAGEDIR) ; rm -f $(KERNELZ).*; \
 	$(ROOTDIR)/tools/bin/lzma_alone e -a1 -d25 $(KERNELZ) $(KERNELZ).$(COMP)
-	gzip -9 <  $(KERNELZ) > $(KERNELZ).gz
+	gzip -9 <  $(KERNELZ) > $(KERNELZ).$(COMPZ)
 ifeq ($(CONFIG_BLK_DEV_INITRD),)
 ifeq ($(CONFIG_ROOTFS_IN_FLASH_NO_PADDING),)
 	@#============================================================
@@ -180,7 +180,7 @@ else
 	$(MKIMAGE_DIR)/mkimage -A mips -O linux -T kernel -C $(COMP) -a 80001000 -e $$ENTRY -k $$KRN_SIZE \
 	-n $(CONFIG_FIRMWARE_PRODUCT_ID) -V $(FIRMWARE_KERNEL_VER) $(FIRMWARE_ROOTFS_VER) -d $(KERNELZ).$(COMP) $(IMAGE) ; \
 	$(MKIMAGE_DIR)/mkimage -A mips -O linux -T kernel -C none -a 80001000 -e $$ENTRY \
-	  -n $(CONFIG_FIRMWARE_PRODUCT_ID) -V $(FIRMWARE_KERNEL_VER) $(FIRMWARE_ROOTFS_VER) -d$(KERNELZ) $(UIMAGE) ; \
+	  -n $(CONFIG_FIRMWARE_PRODUCT_ID) -V $(FIRMWARE_KERNEL_VER) $(FIRMWARE_ROOTFS_VER) -d $(KERNELZ) $(UIMAGE) ; \
 	$(MKIMAGE_DIR)/mkimage -A mips -O linux -T kernel -C $(COMPZ) -a 80001000 -e $$ENTRY \
-	  -n $(CONFIG_FIRMWARE_PRODUCT_ID) -V $(FIRMWARE_KERNEL_VER) $(FIRMWARE_ROOTFS_VER) -d$(KERNELZ) $(UIMAGE).gz
+	  -n $(CONFIG_FIRMWARE_PRODUCT_ID) -V $(FIRMWARE_KERNEL_VER) $(FIRMWARE_ROOTFS_VER) -d $(KERNELZ).$(COMPZ) $(UIMAGE).gz
 endif
