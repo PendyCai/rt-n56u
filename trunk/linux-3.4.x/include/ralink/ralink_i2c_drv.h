@@ -34,7 +34,9 @@
 #ifndef __I2CDRV
 #define __I2CDRV
 
+#ifdef __KERNEL__
 #include <asm/rt2880/rt_mmap.h>
+#endif
 
 #define	RT2880_I2C_READ_STR		"read"	/* I2C read operation */
 #define	RT2880_I2C_WRITE_STR		"write"	/* I2C read operation */
