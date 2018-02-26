@@ -485,7 +485,7 @@ static void adjust_quirks(struct us_data *us)
 			US_FL_CAPACITY_OK | US_FL_IGNORE_RESIDUE |
 			US_FL_SINGLE_LUN | US_FL_NO_WP_DETECT |
 			US_FL_NO_READ_DISC_INFO | US_FL_NO_READ_CAPACITY_16 |
-			US_FL_INITIAL_READ10);
+			US_FL_INITIAL_READ10 | US_FL_WRITE_CACHE);
 
 	p = quirks;
 	while (*p) {
@@ -540,6 +540,9 @@ static void adjust_quirks(struct us_data *us)
 			break;
 		case 'o':
 			f |= US_FL_CAPACITY_OK;
+			break;
+		case 'p':
+			f |= US_FL_WRITE_CACHE;
 			break;
 		case 'r':
 			f |= US_FL_IGNORE_RESIDUE;
@@ -759,11 +762,10 @@ static int usb_stor_acquire_resources(struct us_data *us)
 {
 	int p;
 	struct task_struct *th;
+
 	us->current_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!us->current_urb) {
-		US_DEBUGP("URB allocation failed\n");
+	if (!us->current_urb)
 		return -ENOMEM;
-	}
 
 	/* Just before we start our control thread, initialize
 	 * the device if it needs initialization */

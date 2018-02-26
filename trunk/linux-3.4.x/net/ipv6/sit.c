@@ -599,7 +599,7 @@ out:
 static inline void ipip6_ecn_decapsulate(const struct iphdr *iph, struct sk_buff *skb)
 {
 	if (INET_ECN_is_ce(iph->tos))
-		IP6_ECN_set_ce(ipv6_hdr(skb));
+		IP6_ECN_set_ce(skb, ipv6_hdr(skb));
 }
 
 static inline bool is_spoofed_6rd(struct ip_tunnel *tunnel, const __be32 v4addr,
@@ -1279,7 +1279,7 @@ static int ipip6_tunnel_init(struct net_device *dev)
 	memcpy(dev->broadcast, &tunnel->parms.iph.daddr, 4);
 
 	ipip6_tunnel_bind_dev(dev);
-	dev->tstats = alloc_percpu(struct pcpu_tstats);
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_tstats);
 	if (!dev->tstats)
 		return -ENOMEM;
 
@@ -1301,7 +1301,7 @@ static int __net_init ipip6_fb_tunnel_init(struct net_device *dev)
 	iph->ihl		= 5;
 	iph->ttl		= 64;
 
-	dev->tstats = alloc_percpu(struct pcpu_tstats);
+	dev->tstats = netdev_alloc_pcpu_stats(struct pcpu_tstats);
 	if (!dev->tstats)
 		return -ENOMEM;
 	dev_hold(dev);

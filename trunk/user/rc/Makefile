@@ -61,6 +61,9 @@ endif
 ifdef CONFIG_IPV6
 OBJS += net6.o net_lan6.o net_wan6.o
 endif
+ifdef CONFIG_SMP
+OBJS += smp.o
+endif
 
 all: $(OBJS) Makefile
 	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
