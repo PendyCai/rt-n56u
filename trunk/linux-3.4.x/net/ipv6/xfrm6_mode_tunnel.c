@@ -24,7 +24,7 @@ static inline void ipip6_ecn_decapsulate(struct sk_buff *skb)
 	struct ipv6hdr *inner_iph = ipipv6_hdr(skb);
 
 	if (INET_ECN_is_ce(ipv6_get_dsfield(outer_iph)))
-		IP6_ECN_set_ce(inner_iph);
+		IP6_ECN_set_ce(skb, inner_iph);
 }
 
 /* Add encapsulation header.
@@ -37,6 +37,16 @@ static int xfrm6_mode_tunnel_output(struct xfrm_state *x, struct sk_buff *skb)
 	struct ipv6hdr *top_iph;
 	int dsfield;
 
+#if defined(CONFIG_RALINK_HWCRYPTO_ESP6)
+	if (x->type->proto == IPPROTO_ESP) {
+		int header_len = 0;
+
+		if (x->props.mode == XFRM_MODE_TUNNEL)
+			header_len += sizeof(struct ipv6hdr);
+
+		skb_set_network_header(skb, -header_len);
+	} else
+#endif
 	skb_set_network_header(skb, -x->props.header_len);
 	skb->mac_header = skb->network_header +
 			  offsetof(struct ipv6hdr, nexthdr);

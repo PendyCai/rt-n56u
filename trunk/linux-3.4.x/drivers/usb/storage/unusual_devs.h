@@ -1339,12 +1339,25 @@ UNUSUAL_DEV( 0x0af0, 0xd357, 0x0000, 0x0000,
 		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
 		0 ),
 
+/* Reported by Namjae Jeon <namjae.jeon@samsung.com> */
+UNUSUAL_DEV(0x0bc2, 0x2300, 0x0000, 0x9999,
+		"Seagate",
+		"Portable HDD",
+		USB_SC_DEVICE, USB_PR_DEVICE, NULL, US_FL_WRITE_CACHE),
+
 /* Reported by Ben Efros <ben@pc-doctor.com> */
 UNUSUAL_DEV( 0x0bc2, 0x3010, 0x0000, 0x0000,
 		"Seagate",
 		"FreeAgent Pro",
 		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
 		US_FL_SANE_SENSE ),
+
+/* Reported by Kris Lindgren <kris.lindgren@gmail.com> */
+UNUSUAL_DEV( 0x0bc2, 0x3332, 0x0000, 0x9999,
+		"Seagate",
+		"External",
+		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
+		US_FL_NO_WP_DETECT ),
 
 UNUSUAL_DEV(  0x0d49, 0x7310, 0x0000, 0x9999,
 		"Maxtor",
@@ -1546,6 +1559,12 @@ UNUSUAL_DEV(  0x1058, 0x0704, 0x0000, 0x9999,
 		"External HDD",
 		USB_SC_DEVICE, USB_PR_DEVICE, NULL,
 		US_FL_SANE_SENSE),
+
+/* Reported by Namjae Jeon <namjae.jeon@samsung.com> */
+UNUSUAL_DEV(0x1058, 0x070a, 0x0000, 0x9999,
+		"Western Digital",
+		"My Passport HDD",
+		USB_SC_DEVICE, USB_PR_DEVICE, NULL, US_FL_WRITE_CACHE),
 
 /* Reported by Fabio Venturi <f.venturi@tdnet.it>
  * The device reports a vendor-specific bDeviceClass.

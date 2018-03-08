@@ -208,12 +208,12 @@ if [ -n "$CONFIG_MT76X2_AP" ] ; then
 	cp -rfL "$dir_wifi_src/rtpci/$dir_wifi_ver/mt76x2_ap" "$dir_wifi_dst/"
 fi
 if [ -n "$CONFIG_MT76X3_AP" ] ; then
-	dir_wifi_ver="4.0.X.X"
+	dir_wifi_ver="4.1.X.X"
 	cp -rfL "$dir_wifi_src/rtpci/$dir_wifi_ver/mt76x3" "$dir_wifi_dst/"
 	cp -rfL "$dir_wifi_src/rtpci/$dir_wifi_ver/mt76x3_ap" "$dir_wifi_dst/"
 fi
 if [ -n "$CONFIG_MT7628_AP" ] ; then
-	dir_wifi_ver="4.0.X.X"
+	dir_wifi_ver="4.1.X.X"
 	cp -rfL "$dir_wifi_src/rtsoc/$dir_wifi_ver/mt7628" "$dir_wifi_dst/"
 	cp -rfL "$dir_wifi_src/rtsoc/$dir_wifi_ver/mt7628_ap" "$dir_wifi_dst/"
 fi
@@ -222,6 +222,15 @@ dir_ppe_src="$ROOTDIR/proprietary/rt_ppe"
 dir_ppe_dst="$ROOTDIR/$CONFIG_LINUXDIR/net/nat"
 rm -rf "$dir_ppe_dst/hw_nat"
 cp -rf "$dir_ppe_src/hw_nat" "$dir_ppe_dst/"
+############################ EIP93 ####################################
+dir_eip_src="$ROOTDIR/proprietary/rt_eip"
+dir_eip_dst="$ROOTDIR/$CONFIG_LINUXDIR/drivers/net"
+if [ "$CONFIG_PRODUCT" = "MT7621" ] ; then
+	if [ -d "$dir_eip_src" ] ; then
+		rm -rf "$dir_eip_dst/rt_eip"
+		cp -rf "$dir_eip_src" "$dir_eip_dst/"
+	fi
+fi
 ############################# CPU #####################################
 if [ "$CONFIG_FIRMWARE_CPU_SLEEP" = "y" -o "$CONFIG_RALINK_SYSTICK_COUNTER" = "y" ] ; then
 	func_enable_kernel_param "CONFIG_RALINK_SYSTICK_COUNTER"
@@ -387,6 +396,47 @@ fi
 if [ "$CONFIG_FIRMWARE_INCLUDE_SERIAL" != "y" ] ; then
 	func_disable_kernel_param "CONFIG_USB_SERIAL_CH341"
 	func_disable_kernel_param "CONFIG_USB_SERIAL_PL2303"
+fi
+fi
+############################# XFRM ####################################
+if [ "$CONFIG_FIRMWARE_INCLUDE_SSWAN" = "y" ] ; then
+	CONFIG_FIRMWARE_INCLUDE_XFRM=y
+fi
+if [ "$CONFIG_PRODUCT" = "MT7621" ] ; then
+if [ "$CONFIG_FIRMWARE_INCLUDE_XFRM" != "y" ] ; then
+	func_disable_kernel_param "CONFIG_XFRM"
+	func_disable_kernel_param "CONFIG_XFRM_USER"
+	func_disable_kernel_param "CONFIG_XFRM_IPCOMP"
+	func_disable_kernel_param "CONFIG_NET_KEY"
+	func_disable_kernel_param "CONFIG_INET_AH"
+	func_disable_kernel_param "CONFIG_INET_ESP"
+	func_disable_kernel_param "CONFIG_INET_IPCOMP"
+	func_disable_kernel_param "CONFIG_INET_XFRM_TUNNEL"
+	func_disable_kernel_param "CONFIG_INET_XFRM_MODE_TRANSPORT"
+	func_disable_kernel_param "CONFIG_INET_XFRM_MODE_TUNNEL"
+	func_disable_kernel_param "CONFIG_INET_XFRM_MODE_BEET"
+	func_disable_kernel_param "CONFIG_INET6_AH"
+	func_disable_kernel_param "CONFIG_INET6_ESP"
+	func_disable_kernel_param "CONFIG_INET6_IPCOMP"
+	func_disable_kernel_param "CONFIG_INET6_XFRM_TUNNEL"
+	func_disable_kernel_param "CONFIG_INET6_XFRM_MODE_TRANSPORT"
+	func_disable_kernel_param "CONFIG_INET6_XFRM_MODE_TUNNEL"
+	func_disable_kernel_param "CONFIG_INET6_XFRM_MODE_BEET"
+	func_disable_kernel_param "CONFIG_NETFILTER_XT_MATCH_ESP"
+	func_disable_kernel_param "CONFIG_NETFILTER_XT_MATCH_POLICY"
+	func_disable_kernel_param "CONFIG_IP_NF_MATCH_AH"
+	func_disable_kernel_param "CONFIG_IP6_NF_MATCH_AH"
+	func_disable_kernel_param "CONFIG_IPV6_MULTIPLE_TABLES"
+	func_disable_kernel_param "CONFIG_CRYPTO_AEAD"
+	func_disable_kernel_param "CONFIG_CRYPTO_AEAD2"
+	func_disable_kernel_param "CONFIG_CRYPTO_AUTHENC"
+	func_disable_kernel_param "CONFIG_CRYPTO_CBC"
+	func_disable_kernel_param "CONFIG_CRYPTO_HMAC"
+	func_disable_kernel_param "CONFIG_CRYPTO_MD5"
+	func_disable_kernel_param "CONFIG_CRYPTO_SHA256"
+	func_disable_kernel_param "CONFIG_CRYPTO_AES"
+	func_disable_kernel_param "CONFIG_CRYPTO_DES"
+	func_disable_kernel_param "CONFIG_CRYPTO_DEFLATE"
 fi
 fi
 ############################ IPSET ####################################

@@ -1,4 +1,4 @@
-SRC_NAME=openvpn-2.3.x
+SRC_NAME=openvpn-2.4.x
 
 CFLAGS += -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections
@@ -15,6 +15,7 @@ config_test:
 
 configure:
 	( cd $(SRC_NAME) ; \
+	autoreconf -vi ; \
 	IFCONFIG=/sbin/ifconfig \
 	ROUTE=/sbin/route \
 	NETSTAT=/bin/netstat \
@@ -37,7 +38,6 @@ configure:
 		--enable-fragment \
 		--enable-http-proxy \
 		--enable-def-auth \
-		--enable-password-save \
 		--enable-ssl \
 		--enable-crypto \
 		--enable-lzo \

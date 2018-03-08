@@ -215,7 +215,6 @@ struct cg_proto;
   *	@sk_route_nocaps: forbidden route capabilities (e.g NETIF_F_GSO_MASK)
   *	@sk_gso_type: GSO type (e.g. %SKB_GSO_TCPV4)
   *	@sk_gso_max_size: Maximum GSO segment size to build
-  *	@sk_gso_max_segs: Maximum number of GSO segments
   *	@sk_lingertime: %SO_LINGER l_linger setting
   *	@sk_backlog: always used with the per-socket spinlock held
   *	@sk_callback_lock: used with the callbacks in the end of this struct
@@ -331,7 +330,6 @@ struct sock {
 	netdev_features_t	sk_route_nocaps;
 	int			sk_gso_type;
 	unsigned int		sk_gso_max_size;
-	u16			sk_gso_max_segs;
 	int			sk_rcvlowat;
 	unsigned long	        sk_lingertime;
 	struct sk_buff_head	sk_error_queue;
@@ -481,7 +479,7 @@ static __inline__ int __sk_del_node_init(struct sock *sk)
    modifications.
  */
 
-static inline void sock_hold(struct sock *sk)
+static __always_inline void sock_hold(struct sock *sk)
 {
 	atomic_inc(&sk->sk_refcnt);
 }
@@ -489,7 +487,7 @@ static inline void sock_hold(struct sock *sk)
 /* Ungrab socket in the context, which assumes that socket refcnt
    cannot hit zero, f.e. it is true in context of any socketcall.
  */
-static inline void __sock_put(struct sock *sk)
+static __always_inline void __sock_put(struct sock *sk)
 {
 	atomic_dec(&sk->sk_refcnt);
 }
@@ -1245,7 +1243,7 @@ static inline struct inode *SOCK_INODE(struct socket *socket)
  * Functions for memory accounting
  */
 extern int __sk_mem_schedule(struct sock *sk, int size, int kind);
-extern void __sk_mem_reclaim(struct sock *sk);
+extern void __sk_mem_reclaim(struct sock *sk, int amount);
 
 #define SK_MEM_QUANTUM ((int)PAGE_SIZE)
 #define SK_MEM_QUANTUM_SHIFT ilog2(SK_MEM_QUANTUM)
@@ -1284,7 +1282,7 @@ static inline void sk_mem_reclaim(struct sock *sk)
 	if (!sk_has_account(sk))
 		return;
 	if (sk->sk_forward_alloc >= SK_MEM_QUANTUM)
-		__sk_mem_reclaim(sk);
+		__sk_mem_reclaim(sk, sk->sk_forward_alloc);
 }
 
 static inline void sk_mem_reclaim_partial(struct sock *sk)
@@ -1292,7 +1290,7 @@ static inline void sk_mem_reclaim_partial(struct sock *sk)
 	if (!sk_has_account(sk))
 		return;
 	if (sk->sk_forward_alloc > SK_MEM_QUANTUM)
-		__sk_mem_reclaim(sk);
+		__sk_mem_reclaim(sk, sk->sk_forward_alloc - 1);
 }
 
 static inline void sk_mem_charge(struct sock *sk, int size)
@@ -1307,6 +1305,16 @@ static inline void sk_mem_uncharge(struct sock *sk, int size)
 	if (!sk_has_account(sk))
 		return;
 	sk->sk_forward_alloc += size;
+
+	/* Avoid a possible overflow.
+	 * TCP send queues can make this happen, if sk_mem_reclaim()
+	 * is not called and more than 2 GBytes are released at once.
+	 *
+	 * If we reach 2 MBytes, reclaim 1 MBytes right now, there is
+	 * no need to hold that much forward allocation anyway.
+	 */
+	if (unlikely(sk->sk_forward_alloc >= 1 << 21))
+		__sk_mem_reclaim(sk, 1 << 20);
 }
 
 static inline void sk_wmem_free_skb(struct sock *sk, struct sk_buff *skb)
@@ -2025,7 +2033,9 @@ static __inline__ void
 sock_recv_timestamp(struct msghdr *msg, struct sock *sk, struct sk_buff *skb)
 {
 	ktime_t kt = skb->tstamp;
+#ifdef HAVE_HW_TIME_STAMP
 	struct skb_shared_hwtstamps *hwtstamps = skb_hwtstamps(skb);
+#endif
 
 	/*
 	 * generate control messages if
@@ -2039,11 +2049,14 @@ sock_recv_timestamp(struct msghdr *msg, struct sock *sk, struct sk_buff *skb)
 	 */
 	if (sock_flag(sk, SOCK_RCVTSTAMP) ||
 	    sock_flag(sk, SOCK_TIMESTAMPING_RX_SOFTWARE) ||
-	    (kt.tv64 && sock_flag(sk, SOCK_TIMESTAMPING_SOFTWARE)) ||
-	    (hwtstamps->hwtstamp.tv64 &&
+	    (kt.tv64 && sock_flag(sk, SOCK_TIMESTAMPING_SOFTWARE))
+#ifdef HAVE_HW_TIME_STAMP
+	 || (hwtstamps->hwtstamp.tv64 &&
 	     sock_flag(sk, SOCK_TIMESTAMPING_RAW_HARDWARE)) ||
 	    (hwtstamps->syststamp.tv64 &&
-	     sock_flag(sk, SOCK_TIMESTAMPING_SYS_HARDWARE)))
+	     sock_flag(sk, SOCK_TIMESTAMPING_SYS_HARDWARE))
+#endif
+	    )
 		__sock_recv_timestamp(msg, sk, skb);
 	else
 		sk->sk_stamp = kt;

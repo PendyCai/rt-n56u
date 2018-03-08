@@ -188,12 +188,15 @@ func_fill()
 	dir_dnsmasq="$dir_storage/dnsmasq"
 	dir_ovpnsvr="$dir_storage/openvpn/server"
 	dir_ovpncli="$dir_storage/openvpn/client"
+	dir_sswan="$dir_storage/strongswan"
+	dir_sswan_crt="$dir_sswan/ipsec.d"
 	dir_inadyn="$dir_storage/inadyn"
 	dir_crond="$dir_storage/cron/crontabs"
 	dir_wlan="$dir_storage/wlan"
 
 	script_start="$dir_storage/start_script.sh"
 	script_started="$dir_storage/started_script.sh"
+	script_shutd="$dir_storage/shutdown_script.sh"
 	script_postf="$dir_storage/post_iptables_script.sh"
 	script_postw="$dir_storage/post_wan_script.sh"
 	script_inets="$dir_storage/inet_state_script.sh"
@@ -207,6 +210,9 @@ func_fill()
 	user_ovpnsvr_conf="$dir_ovpnsvr/server.conf"
 	user_ovpncli_conf="$dir_ovpncli/client.conf"
 	user_inadyn_conf="$dir_inadyn/inadyn.conf"
+	user_sswan_conf="$dir_sswan/strongswan.conf"
+	user_sswan_ipsec_conf="$dir_sswan/ipsec.conf"
+	user_sswan_secrets="$dir_sswan/ipsec.secrets"
 
 	# create crond dir
 	[ ! -d "$dir_crond" ] && mkdir -p -m 730 "$dir_crond"
@@ -237,6 +243,19 @@ func_fill()
 
 EOF
 		chmod 755 "$script_started"
+	fi
+
+	# create shutdown script
+	if [ ! -f "$script_shutd" ] ; then
+		cat > "$script_shutd" <<EOF
+#!/bin/sh
+
+### Custom user script
+### Called before router shutdown
+### \$1 - action (0: reboot, 1: halt, 2: power-off)
+
+EOF
+		chmod 755 "$script_shutd"
 	fi
 
 	# create post-iptables script
@@ -550,6 +569,37 @@ EOF
 			chmod 644 "$user_ovpncli_conf"
 		fi
 	fi
+
+	# create strongswan files
+	if [ -x /usr/sbin/ipsec ] ; then
+		[ ! -d "$dir_sswan" ] && mkdir -p -m 700 "$dir_sswan"
+		[ ! -d "$dir_sswan_crt" ] && mkdir -p -m 700 "$dir_sswan_crt"
+		[ ! -d "$dir_sswan_crt/cacerts" ] && mkdir -p -m 700 "$dir_sswan_crt/cacerts"
+		[ ! -d "$dir_sswan_crt/certs" ] && mkdir -p -m 700 "$dir_sswan_crt/certs"
+		[ ! -d "$dir_sswan_crt/private" ] && mkdir -p -m 700 "$dir_sswan_crt/private"
+
+		if [ ! -f "$user_sswan_conf" ] ; then
+			cat > "$user_sswan_conf" <<EOF
+### strongswan.conf - user strongswan configuration file
+
+EOF
+			chmod 644 "$user_sswan_conf"
+		fi
+		if [ ! -f "$user_sswan_ipsec_conf" ] ; then
+			cat > "$user_sswan_ipsec_conf" <<EOF
+### ipsec.conf - user strongswan IPsec configuration file
+
+EOF
+			chmod 644 "$user_sswan_ipsec_conf"
+		fi
+		if [ ! -f "$user_sswan_secrets" ] ; then
+			cat > "$user_sswan_secrets" <<EOF
+### ipsec.secrets - user strongswan IPsec secrets file
+
+EOF
+			chmod 644 "$user_sswan_secrets"
+		fi
+	fi
 }
 
 case "$1" in
@@ -571,6 +621,7 @@ backup)
 	func_backup
 	;;
 restore)
+	func_get_mtd
 	func_restore
 	;;
 erase)

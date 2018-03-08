@@ -50,6 +50,7 @@
 #define SCRIPT_POST_WAN			"/etc/storage/post_wan_script.sh"
 #define SCRIPT_POST_FIREWALL		"/etc/storage/post_iptables_script.sh"
 #define SCRIPT_INTERNET_STATE		"/etc/storage/inet_state_script.sh"
+#define SCRIPT_SHUTDOWN			"/etc/storage/shutdown_script.sh"
 
 #define SCRIPT_OVPN_SERVER		"ovpns.script"
 #define SCRIPT_OVPN_CLIENT		"ovpnc.script"
@@ -182,8 +183,6 @@ int module_smart_unload(const char *module_name, int recurse_unload);
 int module_param_get(const char *module_name, const char *module_param, char *param_value, size_t param_value_size);
 int module_param_set_int(const char *module_name, const char *module_param, int param_value);
 void oom_score_adjust(pid_t pid, int oom_score_adj);
-void set_cpu_affinity(int is_ap_mode);
-void set_vpn_balancing(const char *vpn_ifname);
 void mount_rwfs_partition(void);
 void umount_rwfs_partition(void);
 void start_rwfs_optware(void);
@@ -430,6 +429,7 @@ int  get_mode_radio_wl(void);
 int  get_mode_radio_rt(void);
 int  is_apcli_wisp_wl(void);
 int  is_apcli_wisp_rt(void);
+int  get_apcli_sta_auto(int is_aband);
 char* get_apcli_wisp_ifname(void);
 #if defined (USE_RT3352_MII)
 void check_inic_mii_rebooted(void);
@@ -664,6 +664,15 @@ void notify_watchdog_wifi(int is_5ghz);
 int inicd_main(int argc, char *argv[]);
 int start_inicd(void);
 int stop_inicd(void);
+#endif
+
+#if defined (USE_SMP)
+/* smp.c */
+void set_cpu_affinity(int is_ap_mode);
+void set_vpn_balancing(const char *vpn_ifname, int is_server);
+#else
+#define set_cpu_affinity(x)
+#define set_vpn_balancing(ptr,val)
 #endif
 
 /* rstats.c */

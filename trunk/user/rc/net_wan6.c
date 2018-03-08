@@ -143,7 +143,7 @@ void store_ip6rd_from_dhcp(const char *env_value, const char *prefix)
 {
 	int i;
 	char tmp[100];
-	char ip6rd[64];
+	char ip6rd[64] = {0};
 	char addr6[INET6_ADDRSTRLEN];
 	char *value, *values[4];
 
@@ -152,7 +152,7 @@ void store_ip6rd_from_dhcp(const char *env_value, const char *prefix)
 	if (nvram_match("ip6_6rd_dhcp", "0"))
 		return;
 
-	strncpy(ip6rd, env_value, sizeof(ip6rd));
+	strncpy(ip6rd, env_value, sizeof(ip6rd) - 1);
 	value = ip6rd;
 	for (i = 0; i < 4 && value; i++)
 		values[i] = strsep(&value, " ");
@@ -324,7 +324,7 @@ void start_sit_tunnel(int ipv6_type, char *wan_ifname, char *wan_addr4, char *wa
 		store_lan_addr6(addr6s);
 	}
 
-	set_vpn_balancing(IFNAME_SIT);
+	set_vpn_balancing(IFNAME_SIT, 0);
 }
 
 void stop_sit_tunnel(void)

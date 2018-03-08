@@ -89,7 +89,7 @@ int sysctl_tcp_adv_win_scale __read_mostly = 1;
 EXPORT_SYMBOL(sysctl_tcp_adv_win_scale);
 
 /* rfc5961 challenge ack rate limiting */
-int sysctl_tcp_challenge_ack_limit = 100;
+int sysctl_tcp_challenge_ack_limit = 1000;
 
 int sysctl_tcp_stdurg __read_mostly;
 int sysctl_tcp_rfc1337 __read_mostly;
@@ -1302,13 +1302,14 @@ static int tcp_match_skb_to_sack(struct sock *sk, struct sk_buff *skb,
 		 */
 		if (pkt_len > mss) {
 			unsigned int new_len = (pkt_len / mss) * mss;
-			if (!in_sack && new_len < pkt_len) {
+			if (!in_sack && new_len < pkt_len)
 				new_len += mss;
-				if (new_len >= skb->len)
-					return 0;
-			}
 			pkt_len = new_len;
 		}
+
+		if (pkt_len >= skb->len && !in_sack)
+			return 0;
+
 		err = tcp_fragment(sk, skb, pkt_len, mss);
 		if (err < 0)
 			return err;
@@ -3343,7 +3344,7 @@ static int tcp_clean_rtx_queue(struct sock *sk, int prior_fackets,
 			int delta;
 
 			/* Non-retransmitted hole got filled? That's reordering */
-			if (reord < prior_fackets)
+			if (reord < prior_fackets && reord <= tp->fackets_out)
 				tcp_update_reordering(sk, tp->fackets_out - reord, 0);
 
 			delta = tcp_is_fack(tp) ? pkts_acked :
@@ -3634,13 +3635,21 @@ static void tcp_send_challenge_ack(struct sock *sk)
 	/* unprotected vars, we dont care of overwrites */
 	static u32 challenge_timestamp;
 	static unsigned int challenge_count;
-	u32 now = jiffies / HZ;
+	u32 count, now;
 
+	/* Then check host-wide RFC 5961 rate limit. */
+	now = jiffies / HZ;
 	if (now != challenge_timestamp) {
+		u64 x = random32();
+		u32 half = (sysctl_tcp_challenge_ack_limit + 1) >> 1;
+
 		challenge_timestamp = now;
-		challenge_count = 0;
+		x = (x * sysctl_tcp_challenge_ack_limit) >> 32;
+		WRITE_ONCE(challenge_count, half + (u32)x);
 	}
-	if (++challenge_count <= sysctl_tcp_challenge_ack_limit) {
+	count = READ_ONCE(challenge_count);
+	if (count > 0) {
+		WRITE_ONCE(challenge_count, count - 1);
 		NET_INC_STATS_BH(sock_net(sk), LINUX_MIB_TCPCHALLENGEACK);
 		tcp_send_ack(sk);
 	}
@@ -5176,7 +5185,7 @@ static bool tcp_validate_incoming(struct sock *sk, struct sk_buff *skb,
 	/* step 3: check security and precedence [ignored] */
 
 	/* step 4: Check for a SYN
-	 * RFC 5691 4.2 : Send a challenge ack
+	 * RFC 5961 4.2 : Send a challenge ack
 	 */
 	if (th->syn) {
 syn_challenge:

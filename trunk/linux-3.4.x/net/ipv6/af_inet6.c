@@ -778,7 +778,6 @@ static struct sk_buff *ipv6_gso_segment(struct sk_buff *skb,
 	const struct inet6_protocol *ops;
 	int proto;
 	struct frag_hdr *fptr;
-	unsigned int unfrag_ip6hlen;
 	u8 *prevhdr;
 	int offset = 0;
 
@@ -816,9 +815,13 @@ static struct sk_buff *ipv6_gso_segment(struct sk_buff *skb,
 		ipv6h->payload_len = htons(skb->len - skb->mac_len -
 					   sizeof(*ipv6h));
 		if (proto == IPPROTO_UDP) {
-			unfrag_ip6hlen = ip6_find_1stfragopt(skb, &prevhdr);
+			int err = ip6_find_1stfragopt(skb, &prevhdr);
+			if (err < 0) {
+				kfree_skb_list(segs);
+				return ERR_PTR(err);
+			}
 			fptr = (struct frag_hdr *)(skb_network_header(skb) +
-				unfrag_ip6hlen);
+				err);
 			fptr->frag_off = htons(offset);
 			if (skb->next != NULL)
 				fptr->frag_off |= htons(IP6_MF);
@@ -864,6 +867,7 @@ static struct sk_buff **ipv6_gro_receive(struct sk_buff **head,
 	ops = rcu_dereference(inet6_protos[proto]);
 	if (!ops || !ops->gro_receive) {
 		__pskb_pull(skb, skb_gro_offset(skb));
+		skb_gro_frag0_invalidate(skb);
 		proto = ipv6_gso_pull_exthdrs(skb, proto);
 		skb_gro_pull(skb, -skb_transport_offset(skb));
 		skb_reset_transport_header(skb);
@@ -1164,6 +1168,9 @@ static int __init inet6_init(void)
 	err = ip6_route_init();
 	if (err)
 		goto ip6_route_fail;
+	err = ndisc_late_init();
+	if (err)
+		goto ndisc_late_fail;
 	err = ip6_flowlabel_init();
 	if (err)
 		goto ip6_flowlabel_fail;
@@ -1228,6 +1235,8 @@ ipv6_exthdrs_fail:
 addrconf_fail:
 	ip6_flowlabel_cleanup();
 ip6_flowlabel_fail:
+	ndisc_late_cleanup();
+ndisc_late_fail:
 	ip6_route_cleanup();
 ip6_route_fail:
 #ifdef CONFIG_PROC_FS
@@ -1301,6 +1310,7 @@ static void __exit inet6_exit(void)
 	ipv6_exthdrs_exit();
 	addrconf_cleanup();
 	ip6_flowlabel_cleanup();
+	ndisc_late_cleanup();
 	ip6_route_cleanup();
 #ifdef CONFIG_PROC_FS
 

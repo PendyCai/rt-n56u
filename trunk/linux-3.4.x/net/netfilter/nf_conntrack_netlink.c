@@ -765,8 +765,13 @@ restart:
 	}
 out:
 	spin_unlock_bh(&nf_conntrack_lock);
-	if (last)
+	if (last) {
+		/* nf ct hash resize happened, now clear the leftover. */
+		if ((struct nf_conn *)cb->args[1] == last)
+			cb->args[1] = 0;
+
 		nf_ct_put(last);
+	}
 
 	return skb->len;
 }
@@ -1558,6 +1563,11 @@ ctnetlink_new_conntrack(struct sock *ctnl, struct sk_buff *skb,
 		err = -ENOENT;
 		if (nlh->nlmsg_flags & NLM_F_CREATE) {
 			enum ip_conntrack_events events;
+
+			if (!cda[CTA_TUPLE_ORIG] || !cda[CTA_TUPLE_REPLY])
+				return -EINVAL;
+			if (otuple.dst.protonum != rtuple.dst.protonum)
+				return -EINVAL;
 
 			ct = ctnetlink_create_conntrack(net, cda, &otuple,
 							&rtuple, u3);

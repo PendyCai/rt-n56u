@@ -1827,7 +1827,7 @@ static void change_green_ethernet_mode(u32 green_ethernet_enabled)
 
 	if (g_green_ethernet_enabled != green_ethernet_enabled) {
 		g_green_ethernet_enabled = green_ethernet_enabled;
-		rtk_switch_greenEthernet_set(green_ethernet_enabled);
+		rtk_switch_greenEthernet_set(green_ethernet_enabled, DISABLED);
 		
 		printk("%s - green ethernet: %s\n", RTL8367_DEVNAME, (green_ethernet_enabled) ? "on" : "off");
 	}
@@ -2076,7 +2076,7 @@ static void reset_and_init_switch(int first_call)
 
 #if !RTL8367_DEFAULT_GREEN_ETHERNET
 	/* disable Green Ethernet by default */
-	rtk_switch_greenEthernet_set(DISABLED);
+	rtk_switch_greenEthernet_set(DISABLED, DISABLED);
 #endif
 
 	/* configure ExtIf */
@@ -2090,19 +2090,34 @@ static void reset_and_init_switch(int first_call)
 	mac_cfg.txpause		= ENABLED;
 
 #if defined(CONFIG_RTL8367_API_8370)
-#if !defined(CONFIG_RTL8367_ASIC_R)
+#if (LAN_PORT_CPU == RTK_EXT_1_MAC8)
 	rtk_port_macForceLinkExt1_set(mac_mode, &mac_cfg);
 	rtk_port_rgmiiDelayExt1_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
-#endif
-#if defined(EXT_PORT_INIC) || !defined(RTL8367_SINGLE_EXTIF) || defined(CONFIG_RTL8367_ASIC_R)
-#if defined(EXT_PORT_INIC)
-	/* do not uplink iNIC port early */
-	mac_cfg.link = (g_port_link_inic) ? PORT_LINKUP : PORT_LINKDOWN;
-#endif
+#else
 	rtk_port_macForceLinkExt0_set(mac_mode, &mac_cfg);
 	rtk_port_rgmiiDelayExt0_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
 #endif
+#if !defined(RTL8367_SINGLE_EXTIF)
+#if (WAN_PORT_CPU == RTK_EXT_0_MAC9)
+	rtk_port_macForceLinkExt0_set(mac_mode, &mac_cfg);
+	rtk_port_rgmiiDelayExt0_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
 #else
+	rtk_port_macForceLinkExt1_set(mac_mode, &mac_cfg);
+	rtk_port_rgmiiDelayExt1_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
+#endif
+#endif
+#if defined(EXT_PORT_INIC)
+	/* do not uplink iNIC port early */
+	mac_cfg.link = (g_port_link_inic) ? PORT_LINKUP : PORT_LINKDOWN;
+#if (EXT_PORT_INIC == RTK_EXT_0_MAC9)
+	rtk_port_macForceLinkExt0_set(mac_mode, &mac_cfg);
+	rtk_port_rgmiiDelayExt0_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
+#else
+	rtk_port_macForceLinkExt1_set(mac_mode, &mac_cfg);
+	rtk_port_rgmiiDelayExt1_set(g_rgmii_delay_tx, g_rgmii_delay_rx);
+#endif
+#endif
+#else /* !CONFIG_RTL8367_API_8370 */
 	rtk_port_macForceLinkExt_set(LAN_EXT_ID, mac_mode, &mac_cfg);
 	rtk_port_rgmiiDelayExt_set(LAN_EXT_ID, g_rgmii_delay_tx, g_rgmii_delay_rx);
 #if defined(EXT_PORT_INIC) || !defined(RTL8367_SINGLE_EXTIF)
@@ -2113,7 +2128,8 @@ static void reset_and_init_switch(int first_call)
 	rtk_port_macForceLinkExt_set(WAN_EXT_ID, mac_mode, &mac_cfg);
 	rtk_port_rgmiiDelayExt_set(WAN_EXT_ID, g_rgmii_delay_tx, g_rgmii_delay_rx);
 #endif
-#endif
+#endif /* CONFIG_RTL8367_API_8370 */
+
 	/* enable all PHY (if disabled by bootstrap) */
 	rtk_port_phyEnableAll_set(ENABLED);
 

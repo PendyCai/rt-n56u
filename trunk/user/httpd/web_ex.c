@@ -343,6 +343,8 @@ write_textarea_to_file(const char* value, const char* dir_name, const char* file
 		if (write_file_dos2unix(value, real_path) == 0) {
 			if (file_type == 3) {
 				chmod(real_path, 0600);
+				doSystem ("[ -f /home/admin/.ssh ] && rm /home/admin/.ssh");
+				doSystem ("[ -d /home/admin/.ssh ] || mkdir -p -m 700 /home/admin/.ssh");
 				doSystem("cp -f %s %s", real_path, "/home/admin/.ssh");
 			}
 			else if (file_type == 2)
@@ -983,7 +985,7 @@ validate_asp_apply(webs_t wp, int sid)
 				wl_modified |= WIFI_IWPRIV_CHANGE_BIT;
 			}
 #endif
-#if 0
+#if defined (USE_IGMP_SNOOP)
 			else if (!strcmp(v->name, "wl_IgmpSnEnable"))
 			{
 				set_wifi_param_int(IFNAME_5G_MAIN, "IgmpSnEnable", value, 0, 1);
@@ -1056,7 +1058,7 @@ validate_asp_apply(webs_t wp, int sid)
 				rt_modified |= WIFI_IWPRIV_CHANGE_BIT;
 			}
 #endif
-#if defined(USE_RT3352_MII)
+#if defined (USE_IGMP_SNOOP) || defined(USE_RT3352_MII)
 			else if (!strcmp(v->name, "rt_IgmpSnEnable"))
 			{
 				set_wifi_param_int(IFNAME_2G_MAIN, "IgmpSnEnable", value, 0, 1);
