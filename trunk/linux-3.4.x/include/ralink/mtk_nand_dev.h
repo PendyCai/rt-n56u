@@ -1,7 +1,7 @@
 #ifndef __MTK_NAND_DEV_H__
 #define __MTK_NAND_DEV_H__
 
-#define MTK_NAND_DRV_NAME		"MT7621-NAND"
+#define MTK_NAND_DRV_NAME		"MT7621-NAND-Fixed"
 
 #define NFI_CS_NUM			(1)
 #define NFI_DEFAULT_CS			(0)

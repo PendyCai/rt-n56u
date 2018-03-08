@@ -39,6 +39,7 @@
 #endif
 #endif
 
+
 #if defined(SKIP_BAD_BLOCK)
 static int shift_on_bbt = 0;
 static int is_skip_bad_block(struct mtd_info *mtd, int page);
@@ -333,12 +334,12 @@ static bool mtk_nand_check_bch_error(struct mtd_info *mtd, u8 * pDataBuf, u32 u4
 #if defined(SKIP_BAD_BLOCK)
 					if (!is_skip_bad_block(mtd, u4PageAddr))
 #endif
-						mtd->ecc_stats.corrected++;
+						/*mtd->ecc_stats.corrected++*/;
 				} else {
 #if defined(SKIP_BAD_BLOCK)
 					if (!is_skip_bad_block(mtd, u4PageAddr))
 #endif
-						mtd->ecc_stats.corrected++;
+						/*mtd->ecc_stats.corrected++*/;
 				}
 				u4ErrBitLoc2nd = (au4ErrBitLoc[i] >> 16) & 0x1FFF;
 				if (u4ErrBitLoc2nd != 0) {
@@ -349,12 +350,12 @@ static bool mtk_nand_check_bch_error(struct mtd_info *mtd, u8 * pDataBuf, u32 u4
 #if defined(SKIP_BAD_BLOCK)
 						if (!is_skip_bad_block(mtd, u4PageAddr))
 #endif
-							mtd->ecc_stats.corrected++;
+							/*mtd->ecc_stats.corrected++*/;
 					} else {
 #if defined(SKIP_BAD_BLOCK)
 						if (!is_skip_bad_block(mtd, u4PageAddr))
 #endif
-							mtd->ecc_stats.corrected++;
+							/*mtd->ecc_stats.corrected++*/;
 					}
 				}
 			}
@@ -384,7 +385,7 @@ static bool mtk_nand_check_bch_error(struct mtd_info *mtd, u8 * pDataBuf, u32 u4
 #if defined(SKIP_BAD_BLOCK)
 			if (!is_skip_bad_block(mtd, u4PageAddr))
 #endif
-				mtd->ecc_stats.corrected++;
+				/*mtd->ecc_stats.corrected++*/;
 		} else {
 //			printk(KERN_INFO "Less than 2 bit error, ignore\n");
 		}
